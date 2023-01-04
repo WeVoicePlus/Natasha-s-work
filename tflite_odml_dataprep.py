@@ -10,10 +10,13 @@ from functions import get_files
 
 def json2csv(path="PedestrianDetection", save_filename="out"):
     # CustomVision downloaded annotations to TFLite Model Maker annotations
-    # path=full path because get_files will append the path provided as the root
+    # if you want to train using colabs GPUs you should upload the image files to a folder of the same name,
+    # in this case that would be PedestrianDetection in the root folder. Just makes it easier.
     with open(os.path.join(path, "allTags.json")) as f:
         tags = json.load(f)
 
+    # this is to get a stratefied split as opposed to a random split of the data
+    # https://towardsdatascience.com/stratified-sampling-you-may-have-been-splitting-your-dataset-all-wrong-8cfdd0d32502
     split_dist = {tag: {"TRAINING":   [0, .7],
                         "VALIDATION": [0, .2],
                         "TEST":       [0, .1]} for tag in tags}
@@ -40,7 +43,7 @@ def json2csv(path="PedestrianDetection", save_filename="out"):
             class_name = sample["tag_name"]
             left, top = sample["left"], sample["top"], 
             right, bottom = left+sample["width"], top+sample["height"]
-            class_dist = {k:v[0]/v[1] for k,v in split_dist[class_name].items()}
+            class_dist = {k:v[0]/v[1] for k,v in split_dist[class_name].items()} # current split ratio
             split = min(class_dist, key=class_dist.get)
 
             split_dist[class_name][split][0] += 1
@@ -75,10 +78,6 @@ def add_model_metadata(
 
     # Populate the metadata into the model.
     writer_utils.save_file(writer.populate(), save_path)
-
-
-
-
 
 
 if __name__ == "__main__":
